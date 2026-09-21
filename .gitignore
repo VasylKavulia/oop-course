@@ -1,0 +1,15 @@
+# C# / .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+.idea/
+
+# ОС
+.DS_Store
+Thumbs.db
+
+# Секрети
+*.env
+appsettings.Development.json

@@ -2,25 +2,13 @@ using System.Globalization;
 using System.Text;
 using ClinicApp;
 
+// без цього кирилиця в консолі виводиться і читається неправильно
 Console.OutputEncoding = Encoding.UTF8;
+Console.InputEncoding = Encoding.UTF8;
 // дробові числа з крапкою незалежно від локалі Windows (як у Lab01)
 Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture;
 
-// Задача 1 - пацієнти, створені трьома різними конструкторами
-Patient p1 = new Patient("Іван", "Петренко", new DateTime(1985, 3, 15), "A+", "0501234567");
-Patient p2 = new Patient("Олена", "Коваль", new DateTime(1992, 7, 22), "B-", "0672345678");
-Patient p3 = new Patient("Максим", "Бойко", new DateTime(2010, 1, 30), "O+", "0933456789");
-Patient p4 = new Patient();
-Patient p5 = new Patient("Марія", "Ткач");
-
-Console.WriteLine(p1);
-Console.WriteLine(p2);
-Console.WriteLine(p3);
-Console.WriteLine(p4);
-Console.WriteLine(p5);
-
 // Задача 2 - лікарі та їх доступність зараз
-Console.WriteLine();
 Doctor d1 = new Doctor("Олег", "Сидоренко", "Кардіологія", "LIC-001", "0441234567");
 d1.WorkEndHour = 16;
 Doctor d2 = new Doctor("Наталія", "Мороз", "Неврологія", "LIC-002", "0442345678");
@@ -44,3 +32,137 @@ for (int i = 0; i < doctors.Length; i++)
 }
 Console.WriteLine("Чи приймає " + d1.FullName + " о 15:00? " + (d1.CanAcceptAt(15) ? "так" : "ні"));
 Console.WriteLine("Чи приймає " + d1.FullName + " о 16:00? " + (d1.CanAcceptAt(16) ? "так" : "ні"));
+
+// Задача 3 - пацієнти тепер зберігаються в менеджері
+Console.WriteLine();
+PatientManager patients = new PatientManager();
+patients.Add(new Patient("Іван", "Петренко", new DateTime(1985, 3, 15), "A+", "0501234567"));
+patients.Add(new Patient("Олена", "Коваль", new DateTime(1992, 7, 22), "B-", "0672345678"));
+patients.Add(new Patient("Максим", "Бойко", new DateTime(2010, 1, 30), "O+", "0933456789"));
+patients.Add(new Patient("Марія", "Ткач"));
+
+bool running = true;
+while (running)
+{
+    Console.WriteLine();
+    Console.WriteLine("=== Медична клініка ===");
+    Console.WriteLine("1. Пацієнти");
+    Console.WriteLine("0. Вихід");
+    Console.Write("Оберіть: ");
+    string choice = Console.ReadLine()!;
+
+    switch (choice)
+    {
+        case "1":
+            PatientsMenu(patients);
+            break;
+        case "0":
+            running = false;
+            break;
+        default:
+            Console.WriteLine("Невідомий пункт меню.");
+            break;
+    }
+}
+
+// підменю "Пацієнти" - окрема функція, щоб не роздувати головний switch
+static void PatientsMenu(PatientManager patients)
+{
+    bool back = false;
+    while (!back)
+    {
+        Console.WriteLine();
+        Console.WriteLine("--- Пацієнти ---");
+        Console.WriteLine("1. Показати всіх");
+        Console.WriteLine("2. Додати пацієнта");
+        Console.WriteLine("3. Знайти за ім'ям");
+        Console.WriteLine("4. Видалити");
+        Console.WriteLine("5. Статистика");
+        Console.WriteLine("0. Назад");
+        Console.Write("Оберіть: ");
+        string choice = Console.ReadLine()!;
+
+        switch (choice)
+        {
+            case "1":
+                patients.DisplayAll();
+                break;
+            case "2":
+                AddPatient(patients);
+                break;
+            case "3":
+                Console.Write("Ім'я або прізвище: ");
+                string query = Console.ReadLine()!;
+                Patient[] found = patients.FindByName(query);
+                if (found.Length == 0)
+                {
+                    Console.WriteLine("Нічого не знайдено.");
+                }
+                else
+                {
+                    for (int i = 0; i < found.Length; i++)
+                        Console.WriteLine(found[i]);
+                }
+                break;
+            case "4":
+                int id = ReadInt("ID пацієнта: ");
+                if (patients.Remove(id))
+                    Console.WriteLine("Пацієнта видалено.");
+                else
+                    Console.WriteLine("Пацієнта з ID " + id + " не знайдено.");
+                break;
+            case "5":
+                patients.DisplayStats();
+                break;
+            case "0":
+                back = true;
+                break;
+            default:
+                Console.WriteLine("Невідомий пункт меню.");
+                break;
+        }
+    }
+}
+
+static void AddPatient(PatientManager patients)
+{
+    Console.Write("Ім'я: ");
+    string firstName = Console.ReadLine()!;
+    Console.Write("Прізвище: ");
+    string lastName = Console.ReadLine()!;
+    DateTime dob = ReadDate("Дата народження:");
+    Console.Write("Група крові: ");
+    string bloodType = Console.ReadLine()!;
+    Console.Write("Телефон: ");
+    string phone = Console.ReadLine()!;
+
+    patients.Add(new Patient(firstName, lastName, dob, bloodType, phone));
+}
+
+// читає ціле число, поки користувач не введе коректне
+static int ReadInt(string prompt)
+{
+    while (true)
+    {
+        Console.Write(prompt);
+        int value;
+        if (int.TryParse(Console.ReadLine(), out value))
+            return value;
+        Console.WriteLine("Введіть ціле число.");
+    }
+}
+
+// дату питаємо трьома числами, щоб не залежати від формату вводу
+static DateTime ReadDate(string label)
+{
+    Console.WriteLine(label);
+    while (true)
+    {
+        int day = ReadInt("  День: ");
+        int month = ReadInt("  Місяць: ");
+        int year = ReadInt("  Рік: ");
+        if (year >= 1900 && month >= 1 && month <= 12 && day >= 1 && day <= DateTime.DaysInMonth(year, month))
+            return new DateTime(year, month, day);
+        Console.WriteLine("Такої дати не існує, спробуйте ще раз.");
+    }
+}

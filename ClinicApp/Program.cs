@@ -41,6 +41,7 @@ while (running)
     Console.WriteLine("3. Записи");
     Console.WriteLine("4. Розклад на дату");
     Console.WriteLine("5. Звіт");
+    Console.WriteLine("6. Тест зростаючого масиву");
     Console.WriteLine("0. Вихід");
     Console.Write("Оберіть: ");
     string choice = Console.ReadLine()!;
@@ -62,6 +63,9 @@ while (running)
             break;
         case "5":
             clinic.GenerateReport();
+            break;
+        case "6":
+            TestGrowableManager();
             break;
         case "0":
             running = false;
@@ -323,6 +327,40 @@ static void BookAppointment(Clinic clinic)
     int duration = ReadInt("Тривалість (хв): ");
 
     clinic.Appointments.Book(patientId, doctorId, scheduledAt, duration);
+}
+
+// Задача 8 - перевіряємо, як масив росте сам
+static void TestGrowableManager()
+{
+    Console.WriteLine("=== Тест GrowablePatientManager ===");
+    GrowablePatientManager manager = new GrowablePatientManager();
+
+    Console.WriteLine("Додаємо пацієнтів одного за одним...");
+    for (int i = 1; i <= 20; i++)
+    {
+        Patient patient = new Patient("Тест", "Пацієнт" + i);
+        manager.Add(patient);
+        Console.WriteLine($"  Додано [{patient.Id}]. Розмір: {manager.Count} / {manager.Capacity}");
+    }
+
+    Console.WriteLine();
+    Console.WriteLine("Тест пошуку:");
+    Patient? found = manager.FindById(10);
+    if (found != null)
+        Console.WriteLine("  FindById(10) → " + found.FullName);
+    else
+        Console.WriteLine("  FindById(10) → не знайдено");
+
+    Patient? missing = manager.FindById(99);
+    if (missing != null)
+        Console.WriteLine("  FindById(99) → " + missing.FullName);
+    else
+        Console.WriteLine("  FindById(99) → не знайдено");
+
+    Console.WriteLine();
+    Console.WriteLine("Порівняння:");
+    Console.WriteLine("  PatientManager:         100 місць (фіксовано)");
+    Console.WriteLine($"  GrowablePatientManager:  {manager.Capacity} місця (зросте при потребі)");
 }
 
 // читає ціле число, поки користувач не введе коректне

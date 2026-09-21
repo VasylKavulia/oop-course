@@ -25,6 +25,27 @@ doctors.Add(d1);
 doctors.Add(d2);
 doctors.Add(new Doctor("Андрій", "Власенко", "Педіатрія", "LIC-003", "0443456789"));
 
+// Задача 5 - записи на прийом (поки що тільки з Id, імена будуть у менеджері)
+Console.WriteLine();
+DateTime tomorrow = DateTime.Today.AddDays(1);
+Appointment a1 = new Appointment(1, 1, tomorrow.AddHours(10));
+Appointment a2 = new Appointment(2, 2, tomorrow.AddHours(11), 45);
+Appointment a3 = new Appointment(3, 3, tomorrow.AddDays(1).AddHours(9), 20);
+Console.WriteLine(a1);
+Console.WriteLine(a2);
+Console.WriteLine(a3);
+
+Console.WriteLine();
+Console.WriteLine("Після Cancel та Complete:");
+a1.Cancel("Пацієнт не зміг прийти");
+a2.Complete();
+Console.WriteLine(a1);
+Console.WriteLine(a2);
+// повторний перехід має повернути false
+Console.WriteLine("Скасувати [1] ще раз: " + (a1.Cancel() ? "вдалося" : "не вдалося, статус " + a1.Status));
+Console.WriteLine("Завершити [2] ще раз: " + (a2.Complete() ? "вдалося" : "не вдалося, статус " + a2.Status));
+Console.WriteLine("Запис [3] майбутній? " + (a3.IsUpcoming ? "так" : "ні"));
+
 bool running = true;
 while (running)
 {

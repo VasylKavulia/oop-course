@@ -25,26 +25,13 @@ doctors.Add(d1);
 doctors.Add(d2);
 doctors.Add(new Doctor("Андрій", "Власенко", "Педіатрія", "LIC-003", "0443456789"));
 
-// Задача 5 - записи на прийом (поки що тільки з Id, імена будуть у менеджері)
-Console.WriteLine();
+// менеджер записів отримує обидва інші менеджери, щоб перевіряти Id і показувати імена
+AppointmentManager appointments = new AppointmentManager(patients, doctors);
 DateTime tomorrow = DateTime.Today.AddDays(1);
-Appointment a1 = new Appointment(1, 1, tomorrow.AddHours(10));
-Appointment a2 = new Appointment(2, 2, tomorrow.AddHours(11), 45);
-Appointment a3 = new Appointment(3, 3, tomorrow.AddDays(1).AddHours(9), 20);
-Console.WriteLine(a1);
-Console.WriteLine(a2);
-Console.WriteLine(a3);
-
-Console.WriteLine();
-Console.WriteLine("Після Cancel та Complete:");
-a1.Cancel("Пацієнт не зміг прийти");
-a2.Complete();
-Console.WriteLine(a1);
-Console.WriteLine(a2);
-// повторний перехід має повернути false
-Console.WriteLine("Скасувати [1] ще раз: " + (a1.Cancel() ? "вдалося" : "не вдалося, статус " + a1.Status));
-Console.WriteLine("Завершити [2] ще раз: " + (a2.Complete() ? "вдалося" : "не вдалося, статус " + a2.Status));
-Console.WriteLine("Запис [3] майбутній? " + (a3.IsUpcoming ? "так" : "ні"));
+appointments.Book(1, 1, tomorrow.AddHours(10));
+appointments.Book(2, 2, tomorrow.AddHours(11), 45);
+appointments.Book(3, 3, tomorrow.AddDays(1).AddHours(9), 20);
+appointments.Book(99, 1, tomorrow.AddHours(12)); // такого пацієнта немає
 
 bool running = true;
 while (running)
@@ -53,6 +40,7 @@ while (running)
     Console.WriteLine("=== Медична клініка ===");
     Console.WriteLine("1. Пацієнти");
     Console.WriteLine("2. Лікарі");
+    Console.WriteLine("3. Записи");
     Console.WriteLine("0. Вихід");
     Console.Write("Оберіть: ");
     string choice = Console.ReadLine()!;
@@ -64,6 +52,9 @@ while (running)
             break;
         case "2":
             DoctorsMenu(doctors);
+            break;
+        case "3":
+            AppointmentsMenu(appointments, patients, doctors);
             break;
         case "0":
             running = false;
@@ -241,6 +232,90 @@ static void AddDoctor(DoctorManager doctors)
     doctor.WorkStartHour = start;
     doctor.WorkEndHour = end;
     doctors.Add(doctor);
+}
+
+static void AppointmentsMenu(AppointmentManager appointments, PatientManager patients, DoctorManager doctors)
+{
+    bool back = false;
+    while (!back)
+    {
+        Console.WriteLine();
+        Console.WriteLine("--- Записи ---");
+        Console.WriteLine("1. Майбутні записи");
+        Console.WriteLine("2. Створити запис");
+        Console.WriteLine("3. Скасувати запис");
+        Console.WriteLine("4. Завершити запис");
+        Console.WriteLine("5. Записи пацієнта");
+        Console.WriteLine("6. Записи лікаря");
+        Console.WriteLine("7. Записи на дату");
+        Console.WriteLine("0. Назад");
+        Console.Write("Оберіть: ");
+        string choice = Console.ReadLine()!;
+
+        switch (choice)
+        {
+            case "1":
+                Console.WriteLine("Майбутні записи:");
+                appointments.DisplayList(appointments.GetUpcoming());
+                break;
+            case "2":
+                BookAppointment(appointments, patients, doctors);
+                break;
+            case "3":
+                int cancelId = ReadInt("ID запису: ");
+                Console.Write("Причина (можна пропустити): ");
+                string reason = Console.ReadLine()!;
+                if (appointments.Cancel(cancelId, reason))
+                    Console.WriteLine("Запис [" + cancelId + "] скасовано.");
+                else
+                    Console.WriteLine("Не вдалося скасувати: запису немає або він уже не Scheduled.");
+                break;
+            case "4":
+                int completeId = ReadInt("ID запису: ");
+                if (appointments.Complete(completeId))
+                    Console.WriteLine("Запис [" + completeId + "] завершено.");
+                else
+                    Console.WriteLine("Не вдалося завершити: запису немає або він уже не Scheduled.");
+                break;
+            case "5":
+                int patientId = ReadInt("ID пацієнта: ");
+                Console.WriteLine("Записи пацієнта #" + patientId + ":");
+                appointments.DisplayList(appointments.GetByPatient(patientId));
+                break;
+            case "6":
+                int doctorId = ReadInt("ID лікаря: ");
+                Console.WriteLine("Записи лікаря #" + doctorId + ":");
+                appointments.DisplayList(appointments.GetByDoctor(doctorId));
+                break;
+            case "7":
+                DateTime date = ReadDate("Дата:");
+                appointments.DisplayList(appointments.GetByDate(date));
+                break;
+            case "0":
+                back = true;
+                break;
+            default:
+                Console.WriteLine("Невідомий пункт меню.");
+                break;
+        }
+    }
+}
+
+static void BookAppointment(AppointmentManager appointments, PatientManager patients, DoctorManager doctors)
+{
+    // спочатку показуємо списки, щоб було видно доступні Id
+    patients.DisplayAll();
+    doctors.DisplayAll();
+
+    int patientId = ReadInt("ID пацієнта: ");
+    int doctorId = ReadInt("ID лікаря: ");
+    DateTime date = ReadDate("Дата прийому:");
+    int hour = ReadInt("Година (0-23): ");
+    int minute = ReadInt("Хвилини: ");
+    DateTime scheduledAt = date.AddHours(hour).AddMinutes(minute);
+    int duration = ReadInt("Тривалість (хв): ");
+
+    appointments.Book(patientId, doctorId, scheduledAt, duration);
 }
 
 // читає ціле число, поки користувач не введе коректне

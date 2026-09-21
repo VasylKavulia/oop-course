@@ -11,10 +11,11 @@ Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture;
 // вся робота йде через один об'єкт клініки
 Clinic clinic = new Clinic("Медична Клініка");
 
-// тестові дані
+// тестові дані - пацієнти створені всіма трьома конструкторами
 clinic.Patients.Add(new Patient("Іван", "Петренко", new DateTime(1985, 3, 15), "A+", "0501234567"));
 clinic.Patients.Add(new Patient("Олена", "Коваль", new DateTime(1992, 7, 22), "B-", "0672345678"));
 clinic.Patients.Add(new Patient("Максим", "Бойко", new DateTime(2010, 1, 30), "O+", "0933456789"));
+clinic.Patients.Add(new Patient());
 clinic.Patients.Add(new Patient("Марія", "Ткач"));
 
 Doctor d1 = new Doctor("Олег", "Сидоренко", "Кардіологія", "LIC-001", "0441234567");

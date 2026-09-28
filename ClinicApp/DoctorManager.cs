@@ -33,14 +33,15 @@ public class DoctorManager
     }
 
     // той самий двопрохідний пошук, що і FindByName у пацієнтів
-    public Doctor[] FindBySpeciality(string speciality)
+    // спеціальність тепер enum, тому порівнюємо з її назвою (ToString)
+    public Doctor[] FindBySpeciality(string query)
     {
-        string query = speciality.ToLower();
+        string lowerQuery = query.ToLower();
 
         int matches = 0;
         for (int i = 0; i < _count; i++)
         {
-            if (_doctors[i].Speciality.ToLower().Contains(query))
+            if (_doctors[i].Speciality.ToString().ToLower().Contains(lowerQuery))
                 matches++;
         }
 
@@ -48,7 +49,7 @@ public class DoctorManager
         int index = 0;
         for (int i = 0; i < _count; i++)
         {
-            if (_doctors[i].Speciality.ToLower().Contains(query))
+            if (_doctors[i].Speciality.ToString().ToLower().Contains(lowerQuery))
             {
                 result[index] = _doctors[i];
                 index++;

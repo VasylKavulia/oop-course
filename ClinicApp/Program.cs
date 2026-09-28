@@ -12,20 +12,20 @@ Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture;
 Clinic clinic = new Clinic("Медична Клініка");
 
 // тестові дані - пацієнти створені всіма трьома конструкторами
-clinic.Patients.Add(new Patient("Іван", "Петренко", new DateTime(1985, 3, 15), "A+", "0501234567"));
-clinic.Patients.Add(new Patient("Олена", "Коваль", new DateTime(1992, 7, 22), "B-", "0672345678"));
-clinic.Patients.Add(new Patient("Максим", "Бойко", new DateTime(2010, 1, 30), "O+", "0933456789"));
+clinic.Patients.Add(new Patient("Іван", "Петренко", new DateTime(1985, 3, 15), BloodType.APositive, "0501234567"));
+clinic.Patients.Add(new Patient("Олена", "Коваль", new DateTime(1992, 7, 22), BloodType.BNegative, "0672345678"));
+clinic.Patients.Add(new Patient("Максим", "Бойко", new DateTime(2010, 1, 30), BloodType.OPositive, "0933456789"));
 clinic.Patients.Add(new Patient());
 clinic.Patients.Add(new Patient("Марія", "Ткач"));
 
-Doctor d1 = new Doctor("Олег", "Сидоренко", "Кардіологія", "LIC-001", "0441234567");
+Doctor d1 = new Doctor("Олег", "Сидоренко", Speciality.Cardiology, "LIC-001", "0441234567");
 d1.WorkEndHour = 16;
-Doctor d2 = new Doctor("Наталія", "Мороз", "Неврологія", "LIC-002", "0442345678");
+Doctor d2 = new Doctor("Наталія", "Мороз", Speciality.Neurology, "LIC-002", "0442345678");
 d2.WorkStartHour = 9;
 d2.WorkEndHour = 18;
 clinic.Doctors.Add(d1);
 clinic.Doctors.Add(d2);
-clinic.Doctors.Add(new Doctor("Андрій", "Власенко", "Педіатрія", "LIC-003", "0443456789"));
+clinic.Doctors.Add(new Doctor("Андрій", "Власенко", Speciality.Pediatrics, "LIC-003", "0443456789"));
 
 DateTime tomorrow = DateTime.Today.AddDays(1);
 clinic.Appointments.Book(1, 1, tomorrow.AddHours(10));
@@ -143,8 +143,13 @@ static void AddPatient(Clinic clinic)
     Console.Write("Прізвище: ");
     string lastName = Console.ReadLine()!;
     DateTime dob = ReadDate("Дата народження:");
-    Console.Write("Група крові: ");
-    string bloodType = Console.ReadLine()!;
+
+    // користувач вводить номер, а ми приводимо його до enum
+    Console.WriteLine("Група крові:");
+    for (int i = 0; i <= 8; i++)
+        Console.WriteLine("  " + i + ". " + (BloodType)i);
+    BloodType bloodType = (BloodType)ReadInt("Номер: ");
+
     Console.Write("Телефон: ");
     string phone = Console.ReadLine()!;
 
@@ -231,8 +236,10 @@ static void AddDoctor(Clinic clinic)
     string firstName = Console.ReadLine()!;
     Console.Write("Прізвище: ");
     string lastName = Console.ReadLine()!;
-    Console.Write("Спеціальність: ");
-    string speciality = Console.ReadLine()!;
+    Console.WriteLine("Спеціальність:");
+    for (int i = 0; i <= 7; i++)
+        Console.WriteLine("  " + i + ". " + (Speciality)i);
+    Speciality speciality = (Speciality)ReadInt("Номер: ");
     Console.Write("Номер ліцензії: ");
     string license = Console.ReadLine()!;
     Console.Write("Телефон: ");
@@ -280,14 +287,14 @@ static void AppointmentsMenu(Clinic clinic)
                 if (clinic.Appointments.Cancel(cancelId, reason))
                     Console.WriteLine("Запис [" + cancelId + "] скасовано.");
                 else
-                    Console.WriteLine("Не вдалося скасувати: запису немає або він уже не Scheduled.");
+                    Console.WriteLine("Не вдалося скасувати: запису немає або він уже не запланований.");
                 break;
             case "4":
                 int completeId = ReadInt("ID запису: ");
                 if (clinic.Appointments.Complete(completeId))
                     Console.WriteLine("Запис [" + completeId + "] завершено.");
                 else
-                    Console.WriteLine("Не вдалося завершити: запису немає або він уже не Scheduled.");
+                    Console.WriteLine("Не вдалося завершити: запису немає або він уже не запланований.");
                 break;
             case "5":
                 int patientId = ReadInt("ID пацієнта: ");

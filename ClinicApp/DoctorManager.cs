@@ -43,6 +43,19 @@ public class DoctorManager
         return null;
     }
 
+    public bool TryFindById(int id, out Doctor doctor)
+    {
+        Doctor? found = FindById(id);
+        if (found == null)
+        {
+            doctor = null!;
+            return false;
+        }
+
+        doctor = found;
+        return true;
+    }
+
     // той самий двопрохідний пошук, що і FindByName у пацієнтів
     // шукаємо по українській назві спеціальності, щоб працювало "кардіо"
     public Doctor[] FindBySpeciality(string query)
@@ -61,6 +74,29 @@ public class DoctorManager
         for (int i = 0; i < _count; i++)
         {
             if (ClinicFormatter.FormatSpeciality(_doctors[i].Speciality).ToLower().Contains(lowerQuery))
+            {
+                result[index] = _doctors[i];
+                index++;
+            }
+        }
+        return result;
+    }
+
+    // перевантаження: те саме ім'я, але параметр enum - точне співпадіння
+    public Doctor[] FindBySpeciality(Speciality speciality)
+    {
+        int matches = 0;
+        for (int i = 0; i < _count; i++)
+        {
+            if (_doctors[i].Speciality == speciality)
+                matches++;
+        }
+
+        Doctor[] result = new Doctor[matches];
+        int index = 0;
+        for (int i = 0; i < _count; i++)
+        {
+            if (_doctors[i].Speciality == speciality)
             {
                 result[index] = _doctors[i];
                 index++;

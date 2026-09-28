@@ -46,6 +46,20 @@ public class PatientManager
         return null;
     }
 
+    // патерн TryXxx: повертаємо чи знайшли, а самого пацієнта віддаємо через out
+    public bool TryFindById(int id, out Patient patient)
+    {
+        Patient? found = FindById(id);
+        if (found == null)
+        {
+            patient = null!; // out треба заповнити навіть коли не знайшли
+            return false;
+        }
+
+        patient = found;
+        return true;
+    }
+
     // пошук по частині імені або прізвища без урахування регістру
     public Patient[] FindByName(string name)
     {
@@ -67,6 +81,29 @@ public class PatientManager
         {
             if (_patients[i].FirstName.ToLower().Contains(query) ||
                 _patients[i].LastName.ToLower().Contains(query))
+            {
+                result[index] = _patients[i];
+                index++;
+            }
+        }
+        return result;
+    }
+
+    // як FindByName, але умова - точна рівність enum
+    public Patient[] FindByBloodType(BloodType bloodType)
+    {
+        int matches = 0;
+        for (int i = 0; i < _count; i++)
+        {
+            if (_patients[i].BloodType == bloodType)
+                matches++;
+        }
+
+        Patient[] result = new Patient[matches];
+        int index = 0;
+        for (int i = 0; i < _count; i++)
+        {
+            if (_patients[i].BloodType == bloodType)
             {
                 result[index] = _patients[i];
                 index++;

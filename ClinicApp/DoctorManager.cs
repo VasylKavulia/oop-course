@@ -9,6 +9,17 @@ public class DoctorManager
 
     public int Count => _count;
 
+    // індексатор, як у PatientManager
+    public Doctor? this[int index]
+    {
+        get
+        {
+            if (index < 0 || index >= _count)
+                return null;
+            return _doctors[index];
+        }
+    }
+
     public void Add(Doctor doctor)
     {
         if (_count >= MaxDoctors)
@@ -32,15 +43,29 @@ public class DoctorManager
         return null;
     }
 
-    // той самий двопрохідний пошук, що і FindByName у пацієнтів
-    public Doctor[] FindBySpeciality(string speciality)
+    public bool TryFindById(int id, out Doctor doctor)
     {
-        string query = speciality.ToLower();
+        Doctor? found = FindById(id);
+        if (found == null)
+        {
+            doctor = null!;
+            return false;
+        }
+
+        doctor = found;
+        return true;
+    }
+
+    // той самий двопрохідний пошук, що і FindByName у пацієнтів
+    // шукаємо по українській назві спеціальності, щоб працювало "кардіо"
+    public Doctor[] FindBySpeciality(string query)
+    {
+        string lowerQuery = query.ToLower();
 
         int matches = 0;
         for (int i = 0; i < _count; i++)
         {
-            if (_doctors[i].Speciality.ToLower().Contains(query))
+            if (ClinicFormatter.FormatSpeciality(_doctors[i].Speciality).ToLower().Contains(lowerQuery))
                 matches++;
         }
 
@@ -48,7 +73,30 @@ public class DoctorManager
         int index = 0;
         for (int i = 0; i < _count; i++)
         {
-            if (_doctors[i].Speciality.ToLower().Contains(query))
+            if (ClinicFormatter.FormatSpeciality(_doctors[i].Speciality).ToLower().Contains(lowerQuery))
+            {
+                result[index] = _doctors[i];
+                index++;
+            }
+        }
+        return result;
+    }
+
+    // перевантаження: те саме ім'я, але параметр enum - точне співпадіння
+    public Doctor[] FindBySpeciality(Speciality speciality)
+    {
+        int matches = 0;
+        for (int i = 0; i < _count; i++)
+        {
+            if (_doctors[i].Speciality == speciality)
+                matches++;
+        }
+
+        Doctor[] result = new Doctor[matches];
+        int index = 0;
+        for (int i = 0; i < _count; i++)
+        {
+            if (_doctors[i].Speciality == speciality)
             {
                 result[index] = _doctors[i];
                 index++;
@@ -147,7 +195,7 @@ public class DoctorManager
                 if (_doctors[k].Speciality == _doctors[i].Speciality)
                     withSpeciality++;
             }
-            Console.WriteLine($"  {_doctors[i].Speciality}: {withSpeciality}");
+            Console.WriteLine($"  {ClinicFormatter.FormatSpeciality(_doctors[i].Speciality)}: {withSpeciality}");
         }
         Console.WriteLine("==========================");
     }

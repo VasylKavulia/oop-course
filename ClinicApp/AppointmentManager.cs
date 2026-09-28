@@ -13,6 +13,17 @@ public class AppointmentManager
 
     public int Count => _count;
 
+    // індексатор, як у PatientManager і DoctorManager
+    public Appointment? this[int index]
+    {
+        get
+        {
+            if (index < 0 || index >= _count)
+                return null;
+            return _appointments[index];
+        }
+    }
+
     public AppointmentManager(PatientManager patients, DoctorManager doctors)
     {
         _patients = patients;
@@ -122,6 +133,12 @@ public class AppointmentManager
         return result;
     }
 
+    // перевантаження: будуємо DateTime і викликаємо версію вище, логіку не дублюємо
+    public Appointment[] GetByDate(int year, int month, int day)
+    {
+        return GetByDate(new DateTime(year, month, day));
+    }
+
     public Appointment[] GetUpcoming()
     {
         int matches = 0;
@@ -147,13 +164,8 @@ public class AppointmentManager
         Patient? patient = _patients.FindById(appointment.PatientId);
         Doctor? doctor = _doctors.FindById(appointment.DoctorId);
 
-        string patientName = "Пацієнт #" + appointment.PatientId;
-        if (patient != null)
-            patientName = patient.FullName;
-
-        string doctorName = "Лікар #" + appointment.DoctorId;
-        if (doctor != null)
-            doctorName = doctor.FullName;
+        string patientName = patient?.FullName ?? "Пацієнт #" + appointment.PatientId;
+        string doctorName = doctor?.FullName ?? "Лікар #" + appointment.DoctorId;
 
         string line = $"[{appointment.Id}] {patientName} → {doctorName} | {appointment.ScheduledAt:dd.MM.yyyy HH:mm}–{appointment.EndsAt:HH:mm} | {appointment.Status}";
         if (appointment.Notes.Length > 0)

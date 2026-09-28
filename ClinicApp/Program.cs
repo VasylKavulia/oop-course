@@ -19,10 +19,9 @@ clinic.Patients.Add(new Patient());
 clinic.Patients.Add(new Patient("Марія", "Ткач"));
 
 Doctor d1 = new Doctor("Олег", "Сидоренко", Speciality.Cardiology, "LIC-001", "0441234567");
-d1.WorkEndHour = 16;
+d1.Schedule = new WorkSchedule(8, 16);
 Doctor d2 = new Doctor("Наталія", "Мороз", Speciality.Neurology, "LIC-002", "0442345678");
-d2.WorkStartHour = 9;
-d2.WorkEndHour = 18;
+d2.Schedule = new WorkSchedule(9, 18);
 clinic.Doctors.Add(d1);
 clinic.Doctors.Add(d2);
 clinic.Doctors.Add(new Doctor("Андрій", "Власенко", Speciality.Pediatrics, "LIC-003", "0443456789"));
@@ -43,6 +42,7 @@ while (running)
     Console.WriteLine("4. Розклад на дату");
     Console.WriteLine("5. Звіт");
     Console.WriteLine("6. Тест зростаючого масиву");
+    Console.WriteLine("7. Тест WorkSchedule (struct)");
     Console.WriteLine("0. Вихід");
     Console.Write("Оберіть: ");
     string choice = Console.ReadLine()!;
@@ -67,6 +67,9 @@ while (running)
             break;
         case "6":
             TestGrowableManager();
+            break;
+        case "7":
+            TestWorkSchedule();
             break;
         case "0":
             running = false;
@@ -203,7 +206,7 @@ static void DoctorsMenu(Clinic clinic)
                 {
                     if (all[i].CanAcceptAt(hour))
                     {
-                        Console.WriteLine("  " + all[i].FullName + " - " + all[i].WorkSchedule);
+                        Console.WriteLine("  " + all[i].FullName + " - " + all[i].Schedule.Display);
                         available++;
                     }
                 }
@@ -248,8 +251,7 @@ static void AddDoctor(Clinic clinic)
     int end = ReadInt("Кінець роботи (година): ");
 
     Doctor doctor = new Doctor(firstName, lastName, speciality, license, phone);
-    doctor.WorkStartHour = start;
-    doctor.WorkEndHour = end;
+    doctor.Schedule = new WorkSchedule(start, end);
     clinic.Doctors.Add(doctor);
 }
 
@@ -369,6 +371,37 @@ static void TestGrowableManager()
     Console.WriteLine("Порівняння:");
     Console.WriteLine("  PatientManager:         100 місць (фіксовано)");
     Console.WriteLine($"  GrowablePatientManager:  {manager.Capacity} місця (зросте при потребі)");
+}
+
+// Задача 2 - struct копіюється за значенням, а клас - за посиланням
+static void TestWorkSchedule()
+{
+    Console.WriteLine("=== Тест WorkSchedule ===");
+    WorkSchedule morning = new WorkSchedule(8, 16);
+    WorkSchedule evening = new WorkSchedule(14, 22);
+
+    Console.WriteLine("Ранкова зміна: " + morning);
+    Console.WriteLine("Вечірня зміна: " + evening);
+    Console.WriteLine("Ранкова працює зараз: " + morning.IsNow);
+    Console.WriteLine("Вечірня працює о 15:00: " + evening.Contains(15));
+    Console.WriteLine("Вечірня працює о 22:00: " + evening.Contains(22));
+
+    // copy отримує власну копію значення morning
+    // copy.Start = 10; - не скомпілюється, бо Start тільки для читання
+    WorkSchedule copy = morning;
+    copy = new WorkSchedule(10, 18);
+    Console.WriteLine();
+    Console.WriteLine("Після copy = morning, а потім copy = new WorkSchedule(10, 18):");
+    Console.WriteLine("  morning: " + morning);
+    Console.WriteLine("  copy:    " + copy);
+
+    // для порівняння клас: обидві змінні вказують на один і той самий об'єкт
+    Patient original = new Patient("Тест", "Оригінал");
+    Patient sameObject = original;
+    sameObject.FirstName = "Змінений";
+    Console.WriteLine();
+    Console.WriteLine("Клас Patient: sameObject = original, потім sameObject.FirstName = \"Змінений\":");
+    Console.WriteLine("  original.FullName: " + original.FullName);
 }
 
 // читає ціле число, поки користувач не введе коректне

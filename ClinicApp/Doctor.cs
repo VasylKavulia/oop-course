@@ -10,18 +10,12 @@ public class Doctor
     public Speciality Speciality { get; set; }
     public string LicenseNumber { get; set; }
     public string Phone { get; set; }
-    // години роботи 0-23, графік можна міняти після створення
-    public int WorkStartHour { get; set; }
-    public int WorkEndHour { get; set; }
+    // замість двох окремих годин - один розклад, графік можна замінити цілком
+    public WorkSchedule Schedule { get; set; }
 
     public string FullName => FirstName + " " + LastName;
 
-    public int WorkingHoursPerDay => WorkEndHour - WorkStartHour;
-
-    // D2 - щоб було 08:00, а не 8:00
-    public string WorkSchedule => $"{WorkStartHour:D2}:00–{WorkEndHour:D2}:00";
-
-    public bool IsAvailableNow => CanAcceptAt(DateTime.Now.Hour);
+    public bool IsAvailableNow => Schedule.IsNow;
 
     public Doctor() : this("Невідомий", "Лікар", Speciality.General)
     {
@@ -41,19 +35,17 @@ public class Doctor
         LicenseNumber = licenseNumber;
         Phone = phone;
         // за замовчуванням лікар працює з 8 до 17
-        WorkStartHour = 8;
-        WorkEndHour = 17;
+        Schedule = new WorkSchedule(8, 17);
     }
 
-    // година в межах [початок, кінець) - кінець не включається
     public bool CanAcceptAt(int hour)
     {
-        return hour >= WorkStartHour && hour < WorkEndHour;
+        return Schedule.Contains(hour);
     }
 
     public override string ToString()
     {
         string status = IsAvailableNow ? "доступний зараз" : "не в робочий час";
-        return $"[{Id}] {FullName} | {Speciality} | {LicenseNumber} | Тел: {Phone} | {WorkSchedule} ({WorkingHoursPerDay} год) | {status}";
+        return $"[{Id}] {FullName} | {Speciality} | {LicenseNumber} | Тел: {Phone} | {Schedule} | {status}";
     }
 }

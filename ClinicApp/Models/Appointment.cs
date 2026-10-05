@@ -6,12 +6,20 @@ public class Appointment
 {
     private static int _nextId = 1;
 
+    private int _durationMinutes;
+
     public int Id { get; }
     // зберігаємо тільки Id пацієнта і лікаря, а не самі об'єкти
     public int PatientId { get; }
     public int DoctorId { get; }
     public DateTime ScheduledAt { get; set; }
-    public int DurationMinutes { get; set; }
+
+    public int DurationMinutes
+    {
+        get => _durationMinutes;
+        set => _durationMinutes = value;
+    }
+
     // статус міняється тільки зсередини через Cancel() / Complete()
     public AppointmentStatus Status { get; private set; }
     public string Notes { get; private set; }

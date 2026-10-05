@@ -17,7 +17,12 @@ public class Appointment
     public int DurationMinutes
     {
         get => _durationMinutes;
-        set => _durationMinutes = value;
+        set
+        {
+            if (value <= 0)
+                throw new ArgumentOutOfRangeException(nameof(DurationMinutes), "Тривалість має бути більшою за 0 хвилин.");
+            _durationMinutes = value;
+        }
     }
 
     // статус міняється тільки зсередини через Cancel() / Complete()
@@ -30,13 +35,14 @@ public class Appointment
 
     public Appointment(int patientId, int doctorId, DateTime scheduledAt, int durationMinutes = 30)
     {
-        Id = _nextId++;
         PatientId = patientId;
         DoctorId = doctorId;
         ScheduledAt = scheduledAt;
         DurationMinutes = durationMinutes;
         Status = AppointmentStatus.Scheduled;
         Notes = "";
+        // Id останнім, щоб невдала спроба не забирала номер
+        Id = _nextId++;
     }
 
     // Scheduled -> Cancelled, з будь-якого іншого стану - не можна

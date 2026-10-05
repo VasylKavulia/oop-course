@@ -48,6 +48,7 @@ while (running)
     Console.WriteLine("6. Тест зростаючого масиву");
     Console.WriteLine("7. Тест WorkSchedule (struct)");
     Console.WriteLine("8. Тест членів класу (Lab04)");
+    Console.WriteLine("9. Тест валідації (Lab05)");
     Console.WriteLine("0. Вихід");
     Console.Write("Оберіть: ");
     string choice = Console.ReadLine()!;
@@ -78,6 +79,9 @@ while (running)
             break;
         case "8":
             TestClassMembers(clinic);
+            break;
+        case "9":
+            TestValidation();
             break;
         case "0":
             running = false;
@@ -180,7 +184,19 @@ static void AddPatient(Clinic clinic)
     Console.Write("Телефон: ");
     string phone = Console.ReadLine()!;
 
-    clinic.Patients.Add(new Patient(firstName, lastName, dob, bloodType, phone));
+    // некоректні дані - Patient кине виняток, ловимо його і повертаємось у меню
+    try
+    {
+        clinic.Patients.Add(new Patient(firstName, lastName, dob, bloodType, phone));
+    }
+    catch (ArgumentOutOfRangeException e) // спершу конкретніший тип
+    {
+        Console.WriteLine("Помилка: " + e.Message);
+    }
+    catch (ArgumentException e)
+    {
+        Console.WriteLine("Помилка: " + e.Message);
+    }
 }
 
 static void DoctorsMenu(Clinic clinic)
@@ -286,9 +302,23 @@ static void AddDoctor(Clinic clinic)
     int start = ReadInt("Початок роботи (година): ");
     int end = ReadInt("Кінець роботи (година): ");
 
-    Doctor doctor = new Doctor(firstName, lastName, speciality, license, phone);
-    doctor.Schedule = new WorkSchedule(start, end);
-    clinic.Doctors.Add(doctor);
+    // WorkSchedule теж всередині try - інакше години 20 і 6 обвалять програму
+    // розклад створюємо першим: якщо години неправильні, лікар не створиться і Id не пропаде
+    try
+    {
+        WorkSchedule schedule = new WorkSchedule(start, end);
+        Doctor doctor = new Doctor(firstName, lastName, speciality, license, phone);
+        doctor.Schedule = schedule;
+        clinic.Doctors.Add(doctor);
+    }
+    catch (ArgumentOutOfRangeException e)
+    {
+        Console.WriteLine("Помилка: " + e.Message);
+    }
+    catch (ArgumentException e)
+    {
+        Console.WriteLine("Помилка: " + e.Message);
+    }
 }
 
 static void AppointmentsMenu(Clinic clinic)
@@ -372,7 +402,75 @@ static void BookAppointment(Clinic clinic)
     DateTime scheduledAt = date.AddHours(hour).AddMinutes(minute);
     int duration = ReadInt("Тривалість (хв): ");
 
-    clinic.Appointments.Book(patientId, doctorId, scheduledAt, duration);
+    // тривалість <= 0 - Appointment кине ArgumentOutOfRangeException
+    try
+    {
+        clinic.Appointments.Book(patientId, doctorId, scheduledAt, duration);
+    }
+    catch (ArgumentOutOfRangeException e)
+    {
+        Console.WriteLine("Помилка: " + e.Message);
+    }
+}
+
+// Задачі 3-4 - некоректні дані не проходять, а Id не "з'їдається"
+static void TestValidation()
+{
+    Console.WriteLine("=== Тест валідації ===");
+    DateTime dob = new DateTime(1990, 5, 15);
+
+    try
+    {
+        Patient bad = new Patient("", "Петренко", dob, BloodType.APositive, "0501234567");
+    }
+    catch (ArgumentException e)
+    {
+        Console.WriteLine("Порожнє ім'я -> " + e.GetType().Name + ": " + e.Message);
+    }
+
+    try
+    {
+        Patient bad = new Patient("Іван", "Петренко", DateTime.Today.AddDays(1), BloodType.APositive, "0501234567");
+    }
+    catch (ArgumentOutOfRangeException e)
+    {
+        Console.WriteLine("Народження завтра -> " + e.GetType().Name + ": " + e.Message);
+    }
+
+    try
+    {
+        Patient bad = new Patient("Іван", "Петренко", dob, BloodType.APositive, "050abc4567");
+    }
+    catch (ArgumentException e)
+    {
+        Console.WriteLine("Телефон з літерами -> " + e.GetType().Name + ": " + e.Message);
+    }
+
+    try
+    {
+        WorkSchedule bad = new WorkSchedule(20, 6);
+    }
+    catch (ArgumentException e)
+    {
+        Console.WriteLine("WorkSchedule(20, 6) -> " + e.GetType().Name + ": " + e.Message);
+    }
+
+    // дві невдалі спроби між двома вдалими - номери мають іти підряд
+    Console.WriteLine();
+    Patient first = new Patient("Тест", "Перший");
+    for (int i = 0; i < 2; i++)
+    {
+        try
+        {
+            Patient bad = new Patient("", "Невдалий");
+        }
+        catch (ArgumentException e)
+        {
+            Console.WriteLine("Невдала спроба " + (i + 1) + ": " + e.Message);
+        }
+    }
+    Patient second = new Patient("Тест", "Другий");
+    Console.WriteLine($"Id першого: {first.Id}, Id наступного успішного: {second.Id}");
 }
 
 // Задача 8 - перевіряємо, як масив росте сам

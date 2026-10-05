@@ -13,6 +13,7 @@ public class Patient
     private string _lastName = "";
     private DateTime _dateOfBirth;
     private string _phone = "";
+    private string _email = "";
 
     public int Id { get; }
 
@@ -59,7 +60,17 @@ public class Patient
         }
     }
 
-    public string Email { get; set; }
+    // порожній рядок - email невідомий, це дозволено; непорожній має пройти перевірку
+    public string Email
+    {
+        get => _email;
+        set
+        {
+            if (value.Length > 0)
+                ClinicValidator.ValidateEmail(value);
+            _email = value;
+        }
+    }
 
     // обчислювані властивості - нічого не зберігають, рахуються з інших полів
     public string FullName => FirstName + " " + LastName;

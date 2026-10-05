@@ -1,6 +1,10 @@
 using System.Globalization;
 using System.Text;
 using ClinicApp;
+using ClinicApp.Enums;
+using ClinicApp.Managers;
+using ClinicApp.Models;
+using ClinicApp.Utils;
 
 // без цього кирилиця в консолі виводиться і читається неправильно
 Console.OutputEncoding = Encoding.UTF8;

@@ -1,4 +1,4 @@
-namespace ClinicApp;
+namespace ClinicApp.Models;
 
 // struct - при присвоєнні копіюється саме значення, а не посилання
 public struct WorkSchedule

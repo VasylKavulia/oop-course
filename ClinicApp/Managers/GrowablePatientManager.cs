@@ -1,4 +1,6 @@
-namespace ClinicApp;
+using ClinicApp.Models;
+
+namespace ClinicApp.Managers;
 
 // той самий менеджер, але без ліміту: масив сам росте, коли заповнюється
 public class GrowablePatientManager

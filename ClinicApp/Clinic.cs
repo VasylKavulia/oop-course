@@ -1,3 +1,6 @@
+using ClinicApp.Managers;
+using ClinicApp.Models;
+
 namespace ClinicApp;
 
 // об'єднує всі менеджери, сам майже нічого не робить - делегує їм

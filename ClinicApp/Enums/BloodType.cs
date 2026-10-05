@@ -1,4 +1,4 @@
-namespace ClinicApp;
+namespace ClinicApp.Enums;
 
 // Unknown першим, щоб значення за замовчуванням (0) було "невідомо"
 public enum BloodType

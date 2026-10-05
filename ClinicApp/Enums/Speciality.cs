@@ -1,4 +1,4 @@
-namespace ClinicApp;
+namespace ClinicApp.Enums;
 
 // General першим - це спеціальність за замовчуванням
 public enum Speciality

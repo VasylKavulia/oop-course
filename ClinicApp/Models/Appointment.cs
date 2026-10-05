@@ -1,15 +1,30 @@
-namespace ClinicApp;
+using ClinicApp.Enums;
+using ClinicApp.Utils;
+
+namespace ClinicApp.Models;
 
 public class Appointment
 {
     private static int _nextId = 1;
+
+    private int _durationMinutes;
 
     public int Id { get; }
     // зберігаємо тільки Id пацієнта і лікаря, а не самі об'єкти
     public int PatientId { get; }
     public int DoctorId { get; }
     public DateTime ScheduledAt { get; set; }
-    public int DurationMinutes { get; set; }
+
+    public int DurationMinutes
+    {
+        get => _durationMinutes;
+        set
+        {
+            ClinicValidator.ValidatePositive(value, nameof(DurationMinutes));
+            _durationMinutes = value;
+        }
+    }
+
     // статус міняється тільки зсередини через Cancel() / Complete()
     public AppointmentStatus Status { get; private set; }
     public string Notes { get; private set; }
@@ -20,13 +35,14 @@ public class Appointment
 
     public Appointment(int patientId, int doctorId, DateTime scheduledAt, int durationMinutes = 30)
     {
-        Id = _nextId++;
         PatientId = patientId;
         DoctorId = doctorId;
         ScheduledAt = scheduledAt;
         DurationMinutes = durationMinutes;
         Status = AppointmentStatus.Scheduled;
         Notes = "";
+        // Id останнім, щоб невдала спроба не забирала номер
+        Id = _nextId++;
     }
 
     // Scheduled -> Cancelled, з будь-якого іншого стану - не можна

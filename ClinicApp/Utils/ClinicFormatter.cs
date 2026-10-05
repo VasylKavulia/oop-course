@@ -1,4 +1,6 @@
-namespace ClinicApp;
+using ClinicApp.Enums;
+
+namespace ClinicApp.Utils;
 
 // static клас - об'єкт створити не можна, тільки викликати методи через ім'я класу
 public static class ClinicFormatter

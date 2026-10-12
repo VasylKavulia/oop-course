@@ -10,6 +10,7 @@ public class Clinic
     public PatientManager Patients { get; }
     public DoctorManager Doctors { get; }
     public AppointmentManager Appointments { get; }
+    public MedicalRecordManager MedicalRecords { get; }
 
     public Clinic(string name)
     {
@@ -18,6 +19,7 @@ public class Clinic
         Patients = new PatientManager();
         Doctors = new DoctorManager();
         Appointments = new AppointmentManager(Patients, Doctors);
+        MedicalRecords = new MedicalRecordManager();
     }
 
     public void DisplaySchedule(DateTime date)

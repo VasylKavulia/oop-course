@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Text;
 using ClinicApp;
 using ClinicApp.Enums;
+using ClinicApp.Interfaces;
 using ClinicApp.Managers;
 using ClinicApp.Models;
 using ClinicApp.Utils;
@@ -51,19 +52,25 @@ bool running = true;
 while (running)
 {
     Console.WriteLine();
-    Console.WriteLine("=== " + clinic.Name + " ===");
-    Console.WriteLine("1. Пацієнти");
-    Console.WriteLine("2. Лікарі");
-    Console.WriteLine("3. Записи");
-    Console.WriteLine("4. Медична картка");
-    Console.WriteLine("5. Звіт");
-    Console.WriteLine("6. Розклад на дату");
-    Console.WriteLine("7. Тест зростаючого масиву");
-    Console.WriteLine("8. Тест WorkSchedule (struct)");
-    Console.WriteLine("9. Тест членів класу (Lab04)");
-    Console.WriteLine("10. Тест валідації (Lab05)");
-    Console.WriteLine("0. Вихід");
-    Console.Write("Оберіть: ");
+    // рамка рівна, тільки якщо всі рядки по 48 символів
+    Console.WriteLine("╔══════════════════════════════════════════════╗");
+    Console.WriteLine("║           МЕДИЧНА КЛІНІКА                    ║");
+    Console.WriteLine("╠══════════════════════════════════════════════╣");
+    Console.WriteLine("║  1. Пацієнти       — реєстрація, пошук       ║");
+    Console.WriteLine("║  2. Лікарі         — персонал, розклад       ║");
+    Console.WriteLine("║  3. Записи         — прийоми, скасування     ║");
+    Console.WriteLine("║  4. Медична картка — діагнози, рецепти       ║");
+    Console.WriteLine("║  5. Рахунки        — оплата, борги           ║");
+    Console.WriteLine("║  6. Звіт           — загальна статистика     ║");
+    Console.WriteLine("║  7. Розклад        — записи на дату          ║");
+    Console.WriteLine("╠══════════════════════════════════════════════╣");
+    Console.WriteLine("║  8. Тест зростаючого масиву                  ║");
+    Console.WriteLine("║  9. Тест WorkSchedule (struct)               ║");
+    Console.WriteLine("║ 10. Тест членів класу (Lab04)                ║");
+    Console.WriteLine("║ 11. Тест валідації (Lab05)                   ║");
+    Console.WriteLine("║  0. Вийти                                    ║");
+    Console.WriteLine("╚══════════════════════════════════════════════╝");
+    Console.Write("Оберіть розділ: ");
     string choice = Console.ReadLine()!;
 
     switch (choice)
@@ -81,22 +88,25 @@ while (running)
             MedicalRecordsMenu(clinic);
             break;
         case "5":
-            clinic.GenerateReport();
+            BillingMenu(clinic);
             break;
         case "6":
+            clinic.GenerateReport();
+            break;
+        case "7":
             DateTime date = ReadDate("Дата:");
             clinic.DisplaySchedule(date);
             break;
-        case "7":
+        case "8":
             TestGrowableManager();
             break;
-        case "8":
+        case "9":
             TestWorkSchedule();
             break;
-        case "9":
+        case "10":
             TestClassMembers(clinic);
             break;
-        case "10":
+        case "11":
             TestValidation();
             break;
         case "0":
@@ -226,9 +236,10 @@ static void DoctorsMenu(Clinic clinic)
         Console.WriteLine("2. Додати лікаря");
         Console.WriteLine("3. Знайти за спеціальністю (текст)");
         Console.WriteLine("4. Хто приймає о годині");
-        Console.WriteLine("5. Видалити");
-        Console.WriteLine("6. Статистика");
-        Console.WriteLine("7. Знайти за спеціальністю (зі списку)");
+        Console.WriteLine("5. Вільні години лікаря");
+        Console.WriteLine("6. Видалити");
+        Console.WriteLine("7. Статистика");
+        Console.WriteLine("8. Знайти за спеціальністю (зі списку)");
         Console.WriteLine("0. Назад");
         Console.Write("Оберіть: ");
         string choice = Console.ReadLine()!;
@@ -271,16 +282,19 @@ static void DoctorsMenu(Clinic clinic)
                     Console.WriteLine("О " + hour + ":00 ніхто не приймає.");
                 break;
             case "5":
+                ShowFreeHours(clinic);
+                break;
+            case "6":
                 int id = ReadInt("ID лікаря: ");
                 if (clinic.Doctors.Remove(id))
                     Console.WriteLine("Лікаря видалено.");
                 else
                     Console.WriteLine("Лікаря з ID " + id + " не знайдено.");
                 break;
-            case "6":
+            case "7":
                 clinic.Doctors.DisplayStats();
                 break;
-            case "7":
+            case "8":
                 // тут викликається інша версія FindBySpeciality - з параметром enum
                 Speciality speciality = ReadSpeciality();
                 Doctor[] bySpeciality = clinic.Doctors.FindBySpeciality(speciality);
@@ -337,6 +351,41 @@ static void AddDoctor(Clinic clinic)
     }
 }
 
+// далі лікар тільки як ISchedulable, Doctor - лише для пошуку за ID
+static void ShowFreeHours(Clinic clinic)
+{
+    if (!TryReadInt("ID лікаря: ", out int doctorId))
+        return;
+    Doctor? doctor = clinic.Doctors.FindById(doctorId);
+    if (doctor == null)
+    {
+        Console.WriteLine("Лікаря не знайдено.");
+        return;
+    }
+    ISchedulable schedulable = doctor;
+
+    if (!TryReadDate("Дата (dd.MM.yyyy): ", out DateTime date))
+        return;
+    if (!TryReadInt("Скільки слотів: ", out int slotCount))
+        return;
+
+    // кількість 0 або менше - GetAvailableSlots кидає ArgumentOutOfRangeException
+    try
+    {
+        DateTime[] slots = schedulable.GetAvailableSlots(date, slotCount);
+        for (int i = 0; i < slots.Length; i++)
+            Console.WriteLine(slots[i].ToString("HH:mm"));
+    }
+    catch (ArgumentOutOfRangeException e)
+    {
+        Console.WriteLine("Помилка: " + e.Message);
+    }
+    catch (ArgumentException e)
+    {
+        Console.WriteLine("Помилка: " + e.Message);
+    }
+}
+
 static void AppointmentsMenu(Clinic clinic)
 {
     bool back = false;
@@ -351,6 +400,7 @@ static void AppointmentsMenu(Clinic clinic)
         Console.WriteLine("5. Записи пацієнта");
         Console.WriteLine("6. Записи лікаря");
         Console.WriteLine("7. Записи на дату");
+        Console.WriteLine("8. Скасувати всі записи пацієнта");
         Console.WriteLine("0. Назад");
         Console.Write("Оберіть: ");
         string choice = Console.ReadLine()!;
@@ -393,6 +443,17 @@ static void AppointmentsMenu(Clinic clinic)
             case "7":
                 DateTime date = ReadDate("Дата:");
                 clinic.Appointments.DisplayList(clinic.Appointments.GetByDate(date));
+                break;
+            case "8":
+                if (TryReadInt("ID пацієнта: ", out int cancelPatientId))
+                {
+                    Console.Write("Причина (Enter — без причини): ");
+                    string cancelReason = Console.ReadLine()!;
+                    // Appointment[] іде в параметр ICancellable[] без приведення
+                    // CancelAll static, тому через ім'я класу, а не clinic.Appointments
+                    int cancelled = AppointmentManager.CancelAll(clinic.Appointments.GetByPatient(cancelPatientId), cancelReason);
+                    Console.WriteLine("Скасовано записів: " + cancelled);
+                }
                 break;
             case "0":
                 back = true;
@@ -472,6 +533,61 @@ static void MedicalRecordsMenu(Clinic clinic)
                     Console.WriteLine("Записи лікаря #" + doctorId + ":");
                     clinic.MedicalRecords.DisplayList(clinic.MedicalRecords.GetByDoctor(doctorId));
                 }
+                break;
+            case "0":
+                back = true;
+                break;
+            default:
+                Console.WriteLine("Невідомий пункт меню.");
+                break;
+        }
+    }
+}
+
+// підменю "Рахунки" (Лаба 07): тільки IPayable
+static void BillingMenu(Clinic clinic)
+{
+    bool back = false;
+    while (!back)
+    {
+        Console.WriteLine();
+        Console.WriteLine("--- Рахунки ---");
+        Console.WriteLine("1. Борги пацієнта");
+        Console.WriteLine("2. Всі неоплачені записи");
+        Console.WriteLine("3. Оплатити запис");
+        Console.WriteLine("4. Загальний борг клініки");
+        Console.WriteLine("0. Назад");
+        Console.Write("Оберіть: ");
+        string choice = Console.ReadLine()!;
+
+        switch (choice)
+        {
+            case "1":
+                // неіснуючий пацієнт - просто порожній список і борг 0
+                if (TryReadInt("ID пацієнта: ", out int patientId))
+                {
+                    IPayable[] unpaid = clinic.Billing.GetUnpaidByPatient(patientId);
+                    Console.WriteLine("Неоплачені записи пацієнта #" + patientId + ":");
+                    clinic.Billing.DisplayUnpaid(unpaid);
+                    Console.WriteLine("Борг: " + clinic.Billing.GetPatientDebt(patientId).ToString("F2") + " грн");
+                }
+                break;
+            case "2":
+                IPayable[] all = clinic.Billing.GetAllUnpaid();
+                Console.WriteLine("Усі неоплачені записи:");
+                clinic.Billing.DisplayUnpaid(all);
+                break;
+            case "3":
+                if (TryReadInt("ID запису для оплати: ", out int appointmentId))
+                {
+                    if (clinic.Billing.PayAppointment(appointmentId))
+                        Console.WriteLine("Запис [" + appointmentId + "] оплачено.");
+                    else
+                        Console.WriteLine("Не вдалося оплатити: запис не знайдено, вже оплачено або скасовано.");
+                }
+                break;
+            case "4":
+                Console.WriteLine("Загальний борг по клініці: " + clinic.Billing.GetTotalDebt().ToString("F2") + " грн");
                 break;
             case "0":
                 back = true;
@@ -846,6 +962,16 @@ static bool TryReadInt(string prompt, out int value)
     if (int.TryParse(Console.ReadLine(), out value))
         return true;
     Console.WriteLine("Некоректне число.");
+    return false;
+}
+
+// дата одним рядком; TryParseExact пропускає тільки формат dd.MM.yyyy
+static bool TryReadDate(string prompt, out DateTime value)
+{
+    Console.Write(prompt);
+    if (DateTime.TryParseExact(Console.ReadLine(), "dd.MM.yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out value))
+        return true;
+    Console.WriteLine("Некоректна дата (потрібен формат dd.MM.yyyy).");
     return false;
 }
 

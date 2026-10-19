@@ -77,6 +77,16 @@ public class AppointmentManager
         return appointment.Complete();
     }
 
+    // копія, а не сам _appointments: ззовні масив менеджера не зіпсують,
+    // і в копії немає порожніх місць після _count
+    public Appointment[] GetAll()
+    {
+        Appointment[] result = new Appointment[_count];
+        for (int i = 0; i < _count; i++)
+            result[i] = _appointments[i];
+        return result;
+    }
+
     public Appointment[] GetByPatient(int patientId)
     {
         int matches = 0;

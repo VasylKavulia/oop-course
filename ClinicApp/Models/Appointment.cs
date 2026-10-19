@@ -1,13 +1,17 @@
 using ClinicApp.Enums;
+using ClinicApp.Interfaces;
 using ClinicApp.Utils;
 
 namespace ClinicApp.Models;
 
-public class Appointment
+public class Appointment : IPayable
 {
     private static int _nextId = 1;
+    private const decimal PricePerMinute = 10m;
 
     private int _durationMinutes;
+    // ззовні змінити можна тільки через MarkPaid()
+    private bool _isPaid;
 
     public int Id { get; }
     // зберігаємо тільки Id пацієнта і лікаря, а не самі об'єкти
@@ -32,6 +36,8 @@ public class Appointment
     public DateTime EndsAt => ScheduledAt.AddMinutes(DurationMinutes);
 
     public bool IsUpcoming => ScheduledAt > DateTime.Now && Status == AppointmentStatus.Scheduled;
+
+    public bool IsPaid => _isPaid;
 
     public Appointment(int patientId, int doctorId, DateTime scheduledAt, int durationMinutes = 30)
     {
@@ -65,6 +71,20 @@ public class Appointment
 
         Status = AppointmentStatus.Completed;
         return true;
+    }
+
+    // int * decimal дає decimal, приведення не потрібне
+    public decimal GetCost()
+    {
+        return DurationMinutes * PricePerMinute;
+    }
+
+    // скасований не оплачуємо; void відмову не поверне, тому просто виходимо
+    public void MarkPaid()
+    {
+        if (Status == AppointmentStatus.Cancelled)
+            return;
+        _isPaid = true;
     }
 
     public override string ToString()

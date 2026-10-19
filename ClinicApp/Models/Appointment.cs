@@ -1,13 +1,17 @@
 using ClinicApp.Enums;
+using ClinicApp.Interfaces;
 using ClinicApp.Utils;
 
 namespace ClinicApp.Models;
 
-public class Appointment
+public class Appointment : IPayable, ICancellable
 {
     private static int _nextId = 1;
+    private const decimal PricePerMinute = 10m;
 
     private int _durationMinutes;
+    // ззовні змінити можна тільки через MarkPaid()
+    private bool _isPaid;
 
     public int Id { get; }
     // зберігаємо тільки Id пацієнта і лікаря, а не самі об'єкти
@@ -33,6 +37,13 @@ public class Appointment
 
     public bool IsUpcoming => ScheduledAt > DateTime.Now && Status == AppointmentStatus.Scheduled;
 
+    public bool IsPaid => _isPaid;
+
+    // без окремого поля, щоб не розійшлося зі Status
+    public bool IsCancelled => Status == AppointmentStatus.Cancelled;
+    // причину Cancel() записує в Notes
+    public string CancellationReason => IsCancelled ? Notes : "";
+
     public Appointment(int patientId, int doctorId, DateTime scheduledAt, int durationMinutes = 30)
     {
         PatientId = patientId;
@@ -46,6 +57,7 @@ public class Appointment
     }
 
     // Scheduled -> Cancelled, з будь-якого іншого стану - не можна
+    // він же реалізує Cancel з ICancellable
     public bool Cancel(string reason = "")
     {
         if (Status != AppointmentStatus.Scheduled)
@@ -65,6 +77,20 @@ public class Appointment
 
         Status = AppointmentStatus.Completed;
         return true;
+    }
+
+    // int * decimal дає decimal, приведення не потрібне
+    public decimal GetCost()
+    {
+        return DurationMinutes * PricePerMinute;
+    }
+
+    // скасований не оплачуємо; void відмову не поверне, тому просто виходимо
+    public void MarkPaid()
+    {
+        if (IsCancelled)
+            return;
+        _isPaid = true;
     }
 
     public override string ToString()

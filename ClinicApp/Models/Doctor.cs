@@ -1,9 +1,10 @@
 using ClinicApp.Enums;
+using ClinicApp.Interfaces;
 using ClinicApp.Utils;
 
 namespace ClinicApp.Models;
 
-public class Doctor
+public class Doctor : ISchedulable
 {
     private static int _nextId = 1;
 
@@ -90,6 +91,26 @@ public class Doctor
     public bool CanAcceptAt(int hour)
     {
         return Schedule.Contains(hour);
+    }
+
+    // правило вже є в CanAcceptAt, третя копія не потрібна
+    public bool CanSchedule(DateTime at)
+    {
+        return CanAcceptAt(at.Hour);
+    }
+
+    // години розкладу, а не справді вільні - записів лікар не знає
+    public DateTime[] GetAvailableSlots(DateTime date, int slotCount)
+    {
+        // перевірка першою: з від'ємним розміром масив не створиться (OverflowException)
+        ClinicValidator.ValidatePositive(slotCount, nameof(slotCount));
+
+        // не більше, ніж годин у розкладі
+        int count = Math.Min(slotCount, Schedule.HoursPerDay);
+        DateTime[] slots = new DateTime[count];
+        for (int i = 0; i < count; i++)
+            slots[i] = date.Date.AddHours(Schedule.Start + i);
+        return slots;
     }
 
     public override string ToString()

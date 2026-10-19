@@ -4,7 +4,7 @@ using ClinicApp.Utils;
 
 namespace ClinicApp.Models;
 
-public class Appointment : IPayable
+public class Appointment : IPayable, ICancellable
 {
     private static int _nextId = 1;
     private const decimal PricePerMinute = 10m;
@@ -39,6 +39,11 @@ public class Appointment : IPayable
 
     public bool IsPaid => _isPaid;
 
+    // без окремого поля, щоб не розійшлося зі Status
+    public bool IsCancelled => Status == AppointmentStatus.Cancelled;
+    // причину Cancel() записує в Notes
+    public string CancellationReason => IsCancelled ? Notes : "";
+
     public Appointment(int patientId, int doctorId, DateTime scheduledAt, int durationMinutes = 30)
     {
         PatientId = patientId;
@@ -52,6 +57,7 @@ public class Appointment : IPayable
     }
 
     // Scheduled -> Cancelled, з будь-якого іншого стану - не можна
+    // він же реалізує Cancel з ICancellable
     public bool Cancel(string reason = "")
     {
         if (Status != AppointmentStatus.Scheduled)
@@ -82,7 +88,7 @@ public class Appointment : IPayable
     // скасований не оплачуємо; void відмову не поверне, тому просто виходимо
     public void MarkPaid()
     {
-        if (Status == AppointmentStatus.Cancelled)
+        if (IsCancelled)
             return;
         _isPaid = true;
     }

@@ -1,3 +1,4 @@
+using ClinicApp.Interfaces;
 using ClinicApp.Models;
 
 namespace ClinicApp.Managers;
@@ -75,6 +76,20 @@ public class AppointmentManager
         if (appointment == null)
             return false;
         return appointment.Complete();
+    }
+
+    // працює з будь-чим, що можна скасувати, - знає тільки ICancellable
+    // static, бо стан менеджера не потрібен, тільки параметри
+    public static int CancelAll(ICancellable[] items, string reason = "")
+    {
+        int cancelled = 0;
+        for (int i = 0; i < items.Length; i++)
+        {
+            // рахуємо тільки ті, що справді скасувались
+            if (items[i].Cancel(reason))
+                cancelled++;
+        }
+        return cancelled;
     }
 
     // копія, а не сам _appointments: ззовні масив менеджера не зіпсують,

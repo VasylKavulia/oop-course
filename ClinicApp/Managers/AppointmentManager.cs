@@ -202,7 +202,66 @@ public class AppointmentManager
         return result;
     }
 
+    // у масиві Appointment[] лежать різні підкласи, is перевіряє тип самого об'єкта
+    public Appointment[] GetUrgent()
+    {
+        int matches = 0;
+        for (int i = 0; i < _count; i++)
+        {
+            if (_appointments[i] is UrgentAppointment)
+                matches++;
+        }
+
+        Appointment[] result = new Appointment[matches];
+        int index = 0;
+        for (int i = 0; i < _count; i++)
+        {
+            if (_appointments[i] is UrgentAppointment)
+                result[index++] = _appointments[i];
+        }
+        return result;
+    }
+
+    public Appointment[] GetSpecialist()
+    {
+        int matches = 0;
+        for (int i = 0; i < _count; i++)
+        {
+            if (_appointments[i] is SpecialistAppointment)
+                matches++;
+        }
+
+        Appointment[] result = new Appointment[matches];
+        int index = 0;
+        for (int i = 0; i < _count; i++)
+        {
+            if (_appointments[i] is SpecialistAppointment)
+                result[index++] = _appointments[i];
+        }
+        return result;
+    }
+
+    public Appointment[] GetRegular()
+    {
+        int matches = 0;
+        for (int i = 0; i < _count; i++)
+        {
+            if (_appointments[i] is RegularAppointment)
+                matches++;
+        }
+
+        Appointment[] result = new Appointment[matches];
+        int index = 0;
+        for (int i = 0; i < _count; i++)
+        {
+            if (_appointments[i] is RegularAppointment)
+                result[index++] = _appointments[i];
+        }
+        return result;
+    }
+
     // замість Id показуємо імена, якщо пацієнта/лікаря вже видалили - лишаємо #Id
+    // опис і ціну дає сам запис через віртуальні методи, перевіряти тип тут не треба
     public void DisplayAppointment(Appointment appointment)
     {
         Patient? patient = _patients.FindById(appointment.PatientId);
@@ -211,9 +270,10 @@ public class AppointmentManager
         string patientName = patient?.FullName ?? "Пацієнт #" + appointment.PatientId;
         string doctorName = doctor?.FullName ?? "Лікар #" + appointment.DoctorId;
 
-        string line = $"[{appointment.Id}] {patientName} → {doctorName} | {appointment.ScheduledAt:dd.MM.yyyy HH:mm}–{appointment.EndsAt:HH:mm} | {appointment.Status}";
+        string line = $"[{appointment.Id}] {appointment.GetDescription()} | {patientName} → {doctorName} | {appointment.ScheduledAt:dd.MM.yyyy HH:mm}–{appointment.EndsAt:HH:mm} | {appointment.Status}";
         if (appointment.Notes.Length > 0)
             line += " | " + appointment.Notes;
+        line += " | " + appointment.GetCost().ToString("F2") + " грн";
         Console.WriteLine(line);
     }
 

@@ -415,6 +415,7 @@ static void AppointmentsMenu(Clinic clinic)
         Console.WriteLine("6. Записи лікаря");
         Console.WriteLine("7. Записи на дату");
         Console.WriteLine("8. Скасувати всі записи пацієнта");
+        Console.WriteLine("9. За типом прийому");
         Console.WriteLine("0. Назад");
         Console.Write("Оберіть: ");
         string choice = Console.ReadLine()!;
@@ -469,6 +470,9 @@ static void AppointmentsMenu(Clinic clinic)
                     Console.WriteLine("Скасовано записів: " + cancelled);
                 }
                 break;
+            case "9":
+                ShowAppointmentsByType(clinic);
+                break;
             case "0":
                 back = true;
                 break;
@@ -501,6 +505,32 @@ static void BookAppointment(Clinic clinic)
     catch (ArgumentOutOfRangeException e)
     {
         Console.WriteLine("Помилка: " + e.Message);
+    }
+}
+
+static void ShowAppointmentsByType(Clinic clinic)
+{
+    Console.WriteLine("  1. Термінові");
+    Console.WriteLine("  2. Консультації спеціаліста");
+    Console.WriteLine("  3. Звичайні");
+    Console.Write("Оберіть: ");
+    string type = Console.ReadLine()!;
+
+    // DisplayList сам напише "Записів не знайдено.", якщо масив порожній
+    switch (type)
+    {
+        case "1":
+            clinic.Appointments.DisplayList(clinic.Appointments.GetUrgent());
+            break;
+        case "2":
+            clinic.Appointments.DisplayList(clinic.Appointments.GetSpecialist());
+            break;
+        case "3":
+            clinic.Appointments.DisplayList(clinic.Appointments.GetRegular());
+            break;
+        default:
+            Console.WriteLine("Невідомий тип прийому.");
+            break;
     }
 }
 

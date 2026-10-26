@@ -12,6 +12,8 @@ public class Appointment : IPayable, ICancellable
     private int _durationMinutes;
     // ззовні змінити можна тільки через MarkPaid()
     private bool _isPaid;
+    // 1 - без знижки, 0.8 - VIP (-20%)
+    private decimal _discountMultiplier = 1m;
 
     public int Id { get; }
     // зберігаємо тільки Id пацієнта і лікаря, а не самі об'єкти
@@ -26,6 +28,23 @@ public class Appointment : IPayable, ICancellable
         {
             ClinicValidator.ValidatePositive(value, nameof(DurationMinutes));
             _durationMinutes = value;
+        }
+    }
+
+    // Задача 5, варіант А: множник знижки тут, у базовому класі, і його враховує базова ціна.
+    // Термінові й консультації рахують від base.GetCost(), тому знижка в них уже є і їх не чіпаємо.
+    // VIP-підкласи не підходять: в нащадку UrgentAppointment не можна перевизначити GetDescription
+    // (sealed override, CS0239), від SpecialistAppointment успадкуватись не можна взагалі (CS0509).
+    // Та й класів забагато: з VIP уже 6, а з дитячим і пенсійним тарифом 3 * 4 = 12.
+    public decimal DiscountMultiplier
+    {
+        get => _discountMultiplier;
+        set
+        {
+            // 0 і менше - безкоштовно або мінус, більше 1 - вже націнка, а не знижка
+            if (value <= 0 || value > 1)
+                throw new ArgumentOutOfRangeException(nameof(DiscountMultiplier), $"Поле {nameof(DiscountMultiplier)} має бути більшим за 0 і не більшим за 1.");
+            _discountMultiplier = value;
         }
     }
 
@@ -79,10 +98,21 @@ public class Appointment : IPayable, ICancellable
         return true;
     }
 
-    // int * decimal дає decimal, приведення не потрібне
-    public decimal GetCost()
+    // virtual - підклас може змінити ціну; int * decimal дає decimal, приведення не потрібне
+    public virtual decimal GetCost()
     {
-        return DurationMinutes * PricePerMinute;
+        return DurationMinutes * PricePerMinute * DiscountMultiplier;
+    }
+
+    public virtual string GetDescription()
+    {
+        return "Прийом";
+    }
+
+    // навмисно не virtual - для порівняння new і override у Задачі 3
+    public int GetPriority()
+    {
+        return 3;
     }
 
     // скасований не оплачуємо; void відмову не поверне, тому просто виходимо
@@ -93,11 +123,13 @@ public class Appointment : IPayable, ICancellable
         _isPaid = true;
     }
 
+    // GetDescription і GetCost віртуальні, тому для підкласу тут будуть його опис і його ціна
     public override string ToString()
     {
-        string result = $"[{Id}] Пацієнт #{PatientId} → Лікар #{DoctorId} | {ScheduledAt:dd.MM.yyyy HH:mm}–{EndsAt:HH:mm} | {Status}";
+        string result = $"[{Id}] {GetDescription()} | Пацієнт #{PatientId} → Лікар #{DoctorId} | {ScheduledAt:dd.MM.yyyy HH:mm}–{EndsAt:HH:mm} | {Status}";
         if (Notes.Length > 0)
             result += " | " + Notes;
+        result += " | " + GetCost().ToString("F2") + " грн";
         return result;
     }
 }

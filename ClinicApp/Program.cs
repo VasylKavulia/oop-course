@@ -35,6 +35,8 @@ DateTime tomorrow = DateTime.Today.AddDays(1);
 clinic.Appointments.Book(1, 1, tomorrow.AddHours(10));
 clinic.Appointments.Book(2, 2, tomorrow.AddHours(11), 45);
 clinic.Appointments.Book(3, 3, tomorrow.AddDays(1).AddHours(9), 20);
+clinic.Appointments.BookUrgent(5, 1, tomorrow.AddHours(12), "біль у грудях");
+clinic.Appointments.BookSpecialist(2, 1, tomorrow.AddDays(1).AddHours(13), "кардіологія", 60);
 
 // медична картка: записи всіх трьох видів, щоб було видно поліморфізм
 DateTime today = DateTime.Today;
@@ -47,6 +49,18 @@ clinic.MedicalRecords.Add(new Prescription(1, 1, today.AddDays(-5), "Лізин�
 clinic.MedicalRecords.Add(new Prescription(2, 2, today.AddDays(-40), "Амоксицилін", "500 мг", 10, "3 рази на день"));
 clinic.MedicalRecords.Add(new Diagnosis(2, 2, today.AddDays(-40), "J20.9", "Гострий бронхіт"));
 clinic.MedicalRecords.Add(new LabResult(3, 3, today.AddDays(-3), "Глюкоза", 4.8, "ммоль/л", "3.3–5.5", isNormal: true));
+
+// new проти override: один об'єкт, а посилання на нього у двох змінних різного типу
+UrgentAppointment asUrgent = new UrgentAppointment(1, 1, tomorrow.AddHours(15), "тест");
+Appointment asAppointment = asUrgent;
+Console.WriteLine("== new vs override ==");
+Console.WriteLine($"Через Appointment:       {asAppointment.GetDescription()} | пріоритет {asAppointment.GetPriority()}");
+Console.WriteLine($"Через UrgentAppointment: {asUrgent.GetDescription()} | пріоритет {asUrgent.GetPriority()}");
+// 1. GetDescription - virtual/override, реалізація обирається під час виконання за типом об'єкта.
+//    Об'єкт тут UrgentAppointment, тому і опис термінового, хоч змінна типу Appointment.
+// 2. GetPriority в UrgentAppointment оголошений через new і тільки ховає метод батька.
+//    Такий метод обирається ще при компіляції за типом змінної - змінна Appointment, тому 3.
+// 3. В Appointment зробити GetPriority virtual, а в UrgentAppointment замінити new на override.
 
 bool running = true;
 while (running)
@@ -401,6 +415,7 @@ static void AppointmentsMenu(Clinic clinic)
         Console.WriteLine("6. Записи лікаря");
         Console.WriteLine("7. Записи на дату");
         Console.WriteLine("8. Скасувати всі записи пацієнта");
+        Console.WriteLine("9. За типом прийому");
         Console.WriteLine("0. Назад");
         Console.Write("Оберіть: ");
         string choice = Console.ReadLine()!;
@@ -455,6 +470,9 @@ static void AppointmentsMenu(Clinic clinic)
                     Console.WriteLine("Скасовано записів: " + cancelled);
                 }
                 break;
+            case "9":
+                ShowAppointmentsByType(clinic);
+                break;
             case "0":
                 back = true;
                 break;
@@ -487,6 +505,32 @@ static void BookAppointment(Clinic clinic)
     catch (ArgumentOutOfRangeException e)
     {
         Console.WriteLine("Помилка: " + e.Message);
+    }
+}
+
+static void ShowAppointmentsByType(Clinic clinic)
+{
+    Console.WriteLine("  1. Термінові");
+    Console.WriteLine("  2. Консультації спеціаліста");
+    Console.WriteLine("  3. Звичайні");
+    Console.Write("Оберіть: ");
+    string type = Console.ReadLine()!;
+
+    // DisplayList сам напише "Записів не знайдено.", якщо масив порожній
+    switch (type)
+    {
+        case "1":
+            clinic.Appointments.DisplayList(clinic.Appointments.GetUrgent());
+            break;
+        case "2":
+            clinic.Appointments.DisplayList(clinic.Appointments.GetSpecialist());
+            break;
+        case "3":
+            clinic.Appointments.DisplayList(clinic.Appointments.GetRegular());
+            break;
+        default:
+            Console.WriteLine("Невідомий тип прийому.");
+            break;
     }
 }
 

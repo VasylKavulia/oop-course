@@ -79,10 +79,21 @@ public class Appointment : IPayable, ICancellable
         return true;
     }
 
-    // int * decimal дає decimal, приведення не потрібне
-    public decimal GetCost()
+    // virtual - підклас може змінити ціну; int * decimal дає decimal, приведення не потрібне
+    public virtual decimal GetCost()
     {
         return DurationMinutes * PricePerMinute;
+    }
+
+    public virtual string GetDescription()
+    {
+        return "Прийом";
+    }
+
+    // навмисно не virtual - для порівняння new і override у Задачі 3
+    public int GetPriority()
+    {
+        return 3;
     }
 
     // скасований не оплачуємо; void відмову не поверне, тому просто виходимо
@@ -93,11 +104,13 @@ public class Appointment : IPayable, ICancellable
         _isPaid = true;
     }
 
+    // GetDescription і GetCost віртуальні, тому для підкласу тут будуть його опис і його ціна
     public override string ToString()
     {
-        string result = $"[{Id}] Пацієнт #{PatientId} → Лікар #{DoctorId} | {ScheduledAt:dd.MM.yyyy HH:mm}–{EndsAt:HH:mm} | {Status}";
+        string result = $"[{Id}] {GetDescription()} | Пацієнт #{PatientId} → Лікар #{DoctorId} | {ScheduledAt:dd.MM.yyyy HH:mm}–{EndsAt:HH:mm} | {Status}";
         if (Notes.Length > 0)
             result += " | " + Notes;
+        result += " | " + GetCost().ToString("F2") + " грн";
         return result;
     }
 }

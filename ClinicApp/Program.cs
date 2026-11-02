@@ -75,13 +75,14 @@ while (running)
     Console.WriteLine("║  3. Записи         — прийоми, скасування     ║");
     Console.WriteLine("║  4. Медична картка — діагнози, рецепти       ║");
     Console.WriteLine("║  5. Рахунки        — оплата, борги           ║");
-    Console.WriteLine("║  6. Звіт           — загальна статистика     ║");
-    Console.WriteLine("║  7. Розклад        — записи на дату          ║");
+    Console.WriteLine("║  6. Черга          — очікування, прийом      ║");
+    Console.WriteLine("║  7. Звіт           — загальна статистика     ║");
+    Console.WriteLine("║  8. Розклад        — записи на дату          ║");
     Console.WriteLine("╠══════════════════════════════════════════════╣");
-    Console.WriteLine("║  8. Тест зростаючого масиву                  ║");
-    Console.WriteLine("║  9. Тест WorkSchedule (struct)               ║");
-    Console.WriteLine("║ 10. Тест членів класу (Lab04)                ║");
-    Console.WriteLine("║ 11. Тест валідації (Lab05)                   ║");
+    Console.WriteLine("║  9. Тест зростаючого масиву                  ║");
+    Console.WriteLine("║ 10. Тест WorkSchedule (struct)               ║");
+    Console.WriteLine("║ 11. Тест членів класу (Lab04)                ║");
+    Console.WriteLine("║ 12. Тест валідації (Lab05)                   ║");
     Console.WriteLine("║  0. Вийти                                    ║");
     Console.WriteLine("╚══════════════════════════════════════════════╝");
     Console.Write("Оберіть розділ: ");
@@ -105,22 +106,25 @@ while (running)
             BillingMenu(clinic);
             break;
         case "6":
-            clinic.GenerateReport();
+            WaitingRoomMenu(clinic);
             break;
         case "7":
+            clinic.GenerateReport();
+            break;
+        case "8":
             DateTime date = ReadDate("Дата:");
             clinic.DisplaySchedule(date);
             break;
-        case "8":
+        case "9":
             TestGrowableManager();
             break;
-        case "9":
+        case "10":
             TestWorkSchedule();
             break;
-        case "10":
+        case "11":
             TestClassMembers(clinic);
             break;
-        case "11":
+        case "12":
             TestValidation();
             break;
         case "0":
@@ -643,6 +647,86 @@ static void BillingMenu(Clinic clinic)
     }
 }
 
+// підменю "Черга" (Лаба 09)
+static void WaitingRoomMenu(Clinic clinic)
+{
+    bool back = false;
+    while (!back)
+    {
+        Console.WriteLine();
+        Console.WriteLine("--- Черга ---");
+        Console.WriteLine("1. Додати пацієнта до черги");
+        Console.WriteLine("2. Прийняти першого");
+        Console.WriteLine("3. Хто перший?");
+        Console.WriteLine("4. Переглянути всю чергу");
+        Console.WriteLine("0. Назад");
+        Console.Write("Оберіть: ");
+        string choice = Console.ReadLine()!;
+
+        switch (choice)
+        {
+            case "1":
+                if (TryReadInt("ID пацієнта: ", out int patientId))
+                {
+                    Patient? patient = clinic.Patients.FindById(patientId);
+                    if (patient == null)
+                    {
+                        Console.WriteLine("Пацієнта не знайдено.");
+                    }
+                    else
+                    {
+                        clinic.WaitingRoom.Enqueue(patient);
+                        Console.WriteLine($"До черги додано: {patient.FullName}. У черзі: {clinic.WaitingRoom.Count}");
+                    }
+                }
+                break;
+            case "2":
+                // на порожній черзі Dequeue кидає виняток, ловимо його, щоб програма не впала
+                try
+                {
+                    Patient next = clinic.WaitingRoom.Dequeue();
+                    Console.WriteLine($"Прийнято: {next.FullName}. У черзі лишилось: {clinic.WaitingRoom.Count}");
+                }
+                catch (InvalidOperationException e)
+                {
+                    Console.WriteLine("Помилка: " + e.Message);
+                }
+                break;
+            case "3":
+                // Peek тільки дивиться, з черги нікого не забирає
+                try
+                {
+                    Patient first = clinic.WaitingRoom.Peek();
+                    Console.WriteLine("Перший у черзі: " + first.FullName);
+                }
+                catch (InvalidOperationException e)
+                {
+                    Console.WriteLine("Помилка: " + e.Message);
+                }
+                break;
+            case "4":
+                Patient[] waiting = clinic.WaitingRoom.ToArray();
+                if (waiting.Length == 0)
+                {
+                    Console.WriteLine("Черга порожня.");
+                }
+                else
+                {
+                    Console.WriteLine("Черга (" + waiting.Length + "):");
+                    for (int i = 0; i < waiting.Length; i++)
+                        Console.WriteLine($"  {i + 1}. {waiting[i].FullName}");
+                }
+                break;
+            case "0":
+                back = true;
+                break;
+            default:
+                Console.WriteLine("Невідомий пункт меню.");
+                break;
+        }
+    }
+}
+
 // поліморфізм: масив типу MedicalRecord, а кожен елемент викликає свої GetRecordType() і GetSummary()
 // жодних перевірок типу - код не знає, діагноз це, аналіз чи рецепт
 static void ShowPatientRecords(Clinic clinic, int patientId)
@@ -863,7 +947,7 @@ static void TestGrowableManager()
 
     Console.WriteLine();
     Console.WriteLine("Порівняння:");
-    Console.WriteLine("  PatientManager:         100 місць (фіксовано)");
+    Console.WriteLine("  PatientManager:         без ліміту (тепер там List<Patient>)");
     Console.WriteLine($"  GrowablePatientManager:  {manager.Capacity} місця (зросте при потребі)");
 }
 

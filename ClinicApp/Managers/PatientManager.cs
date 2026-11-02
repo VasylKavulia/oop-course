@@ -5,13 +5,10 @@ namespace ClinicApp.Managers;
 
 public class PatientManager
 {
-    private const int MaxPatients = 100;
+    // List сам росте при додаванні, тому ні ліміту, ні ручного лічильника вже не треба
+    private List<Patient> _patients = new List<Patient>();
 
-    // масив фіксованого розміру + лічильник, скільки комірок реально зайнято
-    private Patient[] _patients = new Patient[MaxPatients];
-    private int _count = 0;
-
-    public int Count => _count;
+    public int Count => _patients.Count;
 
     // індексатор - доступ за позицією: clinic.Patients[0]
     // за межами списку повертаємо null, тому тип Patient?
@@ -19,7 +16,7 @@ public class PatientManager
     {
         get
         {
-            if (index < 0 || index >= _count)
+            if (index < 0 || index >= _patients.Count)
                 return null;
             return _patients[index];
         }
@@ -27,21 +24,14 @@ public class PatientManager
 
     public void Add(Patient patient)
     {
-        if (_count >= MaxPatients)
-        {
-            Console.WriteLine("Неможливо додати: досягнуто ліміт " + MaxPatients + " пацієнтів.");
-            return;
-        }
-
-        _patients[_count] = patient;
-        _count++;
+        _patients.Add(patient);
         Console.WriteLine($"Пацієнта [{patient.Id}] {patient.FullName} додано.");
     }
 
     // лінійний пошук, null якщо такого Id немає
     public Patient? FindById(int id)
     {
-        for (int i = 0; i < _count; i++)
+        for (int i = 0; i < _patients.Count; i++)
         {
             if (_patients[i].Id == id)
                 return _patients[i];
@@ -68,88 +58,59 @@ public class PatientManager
     {
         string query = name.ToLower();
 
-        // перший прохід - рахуємо скільки підходить
-        int matches = 0;
-        for (int i = 0; i < _count; i++)
+        // розмір наперед не відомий - збираємо в список, а масив робимо в кінці
+        List<Patient> result = new List<Patient>();
+        for (int i = 0; i < _patients.Count; i++)
         {
             if (_patients[i].FirstName.ToLower().Contains(query) ||
                 _patients[i].LastName.ToLower().Contains(query))
-                matches++;
+                result.Add(_patients[i]);
         }
-
-        // другий прохід - заповнюємо масив потрібного розміру
-        Patient[] result = new Patient[matches];
-        int index = 0;
-        for (int i = 0; i < _count; i++)
-        {
-            if (_patients[i].FirstName.ToLower().Contains(query) ||
-                _patients[i].LastName.ToLower().Contains(query))
-            {
-                result[index] = _patients[i];
-                index++;
-            }
-        }
-        return result;
+        return result.ToArray();
     }
 
     // як FindByName, але умова - точна рівність enum
     public Patient[] FindByBloodType(BloodType bloodType)
     {
-        int matches = 0;
-        for (int i = 0; i < _count; i++)
+        List<Patient> result = new List<Patient>();
+        for (int i = 0; i < _patients.Count; i++)
         {
             if (_patients[i].BloodType == bloodType)
-                matches++;
+                result.Add(_patients[i]);
         }
+        return result.ToArray();
+    }
 
-        Patient[] result = new Patient[matches];
-        int index = 0;
-        for (int i = 0; i < _count; i++)
-        {
-            if (_patients[i].BloodType == bloodType)
-            {
-                result[index] = _patients[i];
-                index++;
-            }
-        }
-        return result;
+    // копія, а не сам список, як і в DoctorManager
+    public Patient[] GetAll()
+    {
+        return _patients.ToArray();
     }
 
     public bool Remove(int id)
     {
-        int position = -1;
-        for (int i = 0; i < _count; i++)
+        for (int i = 0; i < _patients.Count; i++)
         {
             if (_patients[i].Id == id)
             {
-                position = i;
-                break;
+                // RemoveAt сам зсуває всі наступні елементи
+                _patients.RemoveAt(i);
+                return true;
             }
         }
-
-        if (position == -1)
-            return false;
-
-        // зсуваємо всі наступні елементи на одну позицію вліво
-        for (int i = position; i < _count - 1; i++)
-        {
-            _patients[i] = _patients[i + 1];
-        }
-        _patients[_count - 1] = null!; // остання комірка тепер дубль - очищаємо
-        _count--;
-        return true;
+        return false;
     }
 
     public void DisplayAll()
     {
-        if (_count == 0)
+        if (_patients.Count == 0)
         {
             Console.WriteLine("Список пацієнтів порожній.");
             return;
         }
 
-        Console.WriteLine($"=== Пацієнти ({_count} / {MaxPatients}) ===");
-        for (int i = 0; i < _count; i++)
+        Console.WriteLine($"=== Пацієнти ({_patients.Count}) ===");
+        for (int i = 0; i < _patients.Count; i++)
         {
             Console.WriteLine(_patients[i]);
         }
@@ -158,7 +119,7 @@ public class PatientManager
 
     public void DisplayStats()
     {
-        if (_count == 0)
+        if (_patients.Count == 0)
         {
             Console.WriteLine("Список пацієнтів порожній.");
             return;
@@ -169,7 +130,7 @@ public class PatientManager
         int oldest = 0;
         int adults = 0;
 
-        for (int i = 0; i < _count; i++)
+        for (int i = 0; i < _patients.Count; i++)
         {
             ageSum += _patients[i].Age;
             if (_patients[i].Age < _patients[youngest].Age)
@@ -180,14 +141,14 @@ public class PatientManager
                 adults++;
         }
 
-        double averageAge = (double)ageSum / _count;
+        double averageAge = (double)ageSum / _patients.Count;
 
         Console.WriteLine("=== Статистика пацієнтів ===");
-        Console.WriteLine("Всього:       " + _count);
+        Console.WriteLine("Всього:       " + _patients.Count);
         Console.WriteLine($"Середній вік: {averageAge:F1} р.");
         Console.WriteLine($"Наймолодший:  {_patients[youngest].FullName} ({_patients[youngest].Age} р.)");
         Console.WriteLine($"Найстарший:   {_patients[oldest].FullName} ({_patients[oldest].Age} р.)");
-        Console.WriteLine($"Дорослих:     {adults} з {_count}");
+        Console.WriteLine($"Дорослих:     {adults} з {_patients.Count}");
         Console.WriteLine("============================");
     }
 }

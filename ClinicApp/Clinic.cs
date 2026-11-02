@@ -12,6 +12,8 @@ public class Clinic
     public AppointmentManager Appointments { get; }
     public MedicalRecordManager MedicalRecords { get; }
     public BillingManager Billing { get; }
+    // черга на прийом, зберігає самих пацієнтів, а не їхні Id
+    public WaitingQueue<Patient> WaitingRoom { get; }
 
     public Clinic(string name)
     {
@@ -23,6 +25,7 @@ public class Clinic
         MedicalRecords = new MedicalRecordManager();
         // теж після Appointments, інакше BillingManager отримав би null
         Billing = new BillingManager(Appointments);
+        WaitingRoom = new WaitingQueue<Patient>();
     }
 
     public void DisplaySchedule(DateTime date)

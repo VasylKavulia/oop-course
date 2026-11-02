@@ -1,9 +1,10 @@
 using ClinicApp.Enums;
+using ClinicApp.Interfaces;
 using ClinicApp.Utils;
 
 namespace ClinicApp.Models;
 
-public class Patient
+public class Patient : IIdentifiable
 {
     // лічильник спільний для всіх пацієнтів, тому static
     private static int _nextId = 1;

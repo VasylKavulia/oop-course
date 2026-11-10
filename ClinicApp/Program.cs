@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text;
 using ClinicApp;
+using ClinicApp.Comparators;
 using ClinicApp.Enums;
 using ClinicApp.Interfaces;
 using ClinicApp.Managers;
@@ -37,6 +38,8 @@ clinic.Appointments.Book(2, 2, tomorrow.AddHours(11), 45);
 clinic.Appointments.Book(3, 3, tomorrow.AddDays(1).AddHours(9), 20);
 clinic.Appointments.BookUrgent(5, 1, tomorrow.AddHours(12), "біль у грудях");
 clinic.Appointments.BookSpecialist(2, 1, tomorrow.AddDays(1).AddHours(13), "кардіологія", 60);
+// ще прийом у педіатра, щоб за навантаженням і за виручкою порядок був різний
+clinic.Appointments.Book(3, 3, tomorrow.AddDays(2).AddHours(10), 15);
 
 // медична картка: записи всіх трьох видів, щоб було видно поліморфізм
 DateTime today = DateTime.Today;
@@ -77,12 +80,13 @@ while (running)
     Console.WriteLine("║  5. Рахунки        — оплата, борги           ║");
     Console.WriteLine("║  6. Черга          — очікування, прийом      ║");
     Console.WriteLine("║  7. Звіт           — загальна статистика     ║");
-    Console.WriteLine("║  8. Розклад        — записи на дату          ║");
+    Console.WriteLine("║  8. Аналітика      — лікарі, пацієнти        ║");
+    Console.WriteLine("║  9. Розклад        — записи на дату          ║");
     Console.WriteLine("╠══════════════════════════════════════════════╣");
-    Console.WriteLine("║  9. Тест зростаючого масиву                  ║");
-    Console.WriteLine("║ 10. Тест WorkSchedule (struct)               ║");
-    Console.WriteLine("║ 11. Тест членів класу (Lab04)                ║");
-    Console.WriteLine("║ 12. Тест валідації (Lab05)                   ║");
+    Console.WriteLine("║ 10. Тест зростаючого масиву                  ║");
+    Console.WriteLine("║ 11. Тест WorkSchedule (struct)               ║");
+    Console.WriteLine("║ 12. Тест членів класу (Lab04)                ║");
+    Console.WriteLine("║ 13. Тест валідації (Lab05)                   ║");
     Console.WriteLine("║  0. Вийти                                    ║");
     Console.WriteLine("╚══════════════════════════════════════════════╝");
     Console.Write("Оберіть розділ: ");
@@ -112,19 +116,22 @@ while (running)
             clinic.GenerateReport();
             break;
         case "8":
+            AnalyticsMenu(clinic);
+            break;
+        case "9":
             DateTime date = ReadDate("Дата:");
             clinic.DisplaySchedule(date);
             break;
-        case "9":
+        case "10":
             TestGrowableManager();
             break;
-        case "10":
+        case "11":
             TestWorkSchedule();
             break;
-        case "11":
+        case "12":
             TestClassMembers(clinic);
             break;
-        case "12":
+        case "13":
             TestValidation();
             break;
         case "0":
@@ -725,6 +732,84 @@ static void WaitingRoomMenu(Clinic clinic)
                 break;
         }
     }
+}
+
+// підменю "Аналітика" (Лаба 10)
+static void AnalyticsMenu(Clinic clinic)
+{
+    bool back = false;
+    while (!back)
+    {
+        Console.WriteLine();
+        Console.WriteLine("── Аналітика ───────────────────");
+        Console.WriteLine("  1. Лікарі за навантаженням");
+        Console.WriteLine("  2. Лікарі за виручкою");
+        Console.WriteLine("  3. Лікарі за іменем");
+        Console.WriteLine("  4. Пацієнти за кількістю візитів");
+        Console.WriteLine("  5. Пацієнти за витратами");
+        Console.WriteLine("  0. Назад");
+        Console.Write("Оберіть: ");
+        string choice = Console.ReadLine()!;
+
+        // список щоразу збираємо заново, тому звіт завжди по поточних даних
+        switch (choice)
+        {
+            case "1":
+                // Sort() без аргументу бере порядок з CompareTo в DoctorStats
+                List<DoctorStats> byLoad = CollectDoctorStats(clinic);
+                byLoad.Sort();
+                foreach (DoctorStats stats in byLoad)
+                    Console.WriteLine(stats);
+                break;
+            case "2":
+                List<DoctorStats> byRevenue = CollectDoctorStats(clinic);
+                byRevenue.Sort(new DoctorStatsByRevenue());
+                foreach (DoctorStats stats in byRevenue)
+                    Console.WriteLine(stats);
+                break;
+            case "3":
+                List<DoctorStats> byName = CollectDoctorStats(clinic);
+                byName.Sort(new DoctorStatsByName());
+                foreach (DoctorStats stats in byName)
+                    Console.WriteLine(stats);
+                break;
+            case "4":
+                List<PatientStats> byVisits = CollectPatientStats(clinic);
+                byVisits.Sort();
+                foreach (PatientStats stats in byVisits)
+                    Console.WriteLine(stats);
+                break;
+            case "5":
+                List<PatientStats> bySpent = CollectPatientStats(clinic);
+                bySpent.Sort(new PatientStatsBySpent());
+                foreach (PatientStats stats in bySpent)
+                    Console.WriteLine(stats);
+                break;
+            case "0":
+                back = true;
+                break;
+            default:
+                Console.WriteLine("Невідомий пункт меню.");
+                break;
+        }
+    }
+}
+
+// ComputeDoctorStats() повертає ітератор, а Sort() є тільки у списку, тому збираємо через foreach
+static List<DoctorStats> CollectDoctorStats(Clinic clinic)
+{
+    List<DoctorStats> result = new List<DoctorStats>();
+    foreach (DoctorStats stats in clinic.Analytics.ComputeDoctorStats())
+        result.Add(stats);
+    return result;
+}
+
+static List<PatientStats> CollectPatientStats(Clinic clinic)
+{
+    List<PatientStats> result = new List<PatientStats>();
+    foreach (PatientStats stats in clinic.Analytics.ComputePatientStats())
+        result.Add(stats);
+    return result;
 }
 
 // поліморфізм: масив типу MedicalRecord, а кожен елемент викликає свої GetRecordType() і GetSummary()
